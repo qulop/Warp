@@ -1,17 +1,17 @@
+#[cfg(target_os = "windows")]
 pub mod win32 {             
     use windows::Win32::Foundation::{ERROR_BUFFER_OVERFLOW, ERROR_SUCCESS};
     use windows::Win32::Networking::WinSock::{AF_INET, SOCKADDR_IN};
     use windows::Win32::NetworkManagement::IpHelper::{
-        GetAdaptersAddresses, GAA_FLAG_INCLUDE_PREFIX, 
-        GET_ADAPTERS_ADDRESSES_FLAGS, IP_ADAPTER_ADDRESSES_LH,
-        IP_ADAPTER_UNICAST_ADDRESS_LH
+        GetAdaptersAddresses, 
+        GAA_FLAG_INCLUDE_PREFIX, 
+        GET_ADAPTERS_ADDRESSES_FLAGS, IP_ADAPTER_ADDRESSES_LH, IP_ADAPTER_UNICAST_ADDRESS_LH
     };
 
     use std::io::{ErrorKind, Error, Result};
     use std::net::Ipv4Addr;
     use log::debug;
     use std::ptr;
-
 
 
     unsafe fn get_adapters_addresses(adapters_list: &Option<*mut IP_ADAPTER_ADDRESSES_LH>, buf_sz: *mut u32) -> u32 {
@@ -72,6 +72,7 @@ pub mod win32 {
 }
 
 
+#[cfg(target_os = "linux")]
 pub mod unix {
     use std::net::Ipv4Addr;
     use std::io::{Error, ErrorKind, Result};

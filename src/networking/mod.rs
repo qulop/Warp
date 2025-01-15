@@ -5,12 +5,12 @@ use std::ops::RangeInclusive;
 use std::net::{TcpListener, Ipv4Addr};
 
 
-
+#[inline(always)]
 pub fn is_port_available(port: u16) -> Result<u16> {
     return TcpListener::bind(("0.0.0.0", port)).map(|_| port);
 }
 
-
+#[inline]
 pub fn find_available_port(mut rng: RangeInclusive<u16>) -> Result<u16> {
     match (rng).find(|port: &u16| is_port_available(*port).is_ok()) {
         Some(val) => return Ok(val),
@@ -18,14 +18,17 @@ pub fn find_available_port(mut rng: RangeInclusive<u16>) -> Result<u16> {
     }
 }
 
-
+#[inline(always)]
 pub fn get_local_ipv4() -> Result<Ipv4Addr> {
-    if cfg!(windows) || cfg!(unix) {
-        if cfg!(windows) {
-            return details::win32::get_local_ipv4();
-        }
-        return details::unix::get_local_ipv4();
+    #[cfg(target_os = "windows")] {
+        return details::win32::get_local_ipv4();
     }
     
-    panic!("Implementation of function `get_local_ipv4()` for your operation system doesn't exist!");
+    #[cfg(target_os = "linux")] {
+        return details::unix::get_local_ipv4();
+    }
+
+    #[cfg(not(any(target_os = "windows", target_os = "linux")))] {
+        unknown_platform!();
+    }
 }
