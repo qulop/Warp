@@ -1,48 +1,46 @@
-use std::io::Error;
-use std::net::{SocketAddr, UdpSocket};
-use std::env::args;
+mod networking;
+mod capture;
+mod client;
+mod server;
+mod utils;
+mod ui;
 
 
-
-struct Server {
-    socket: UdpSocket,
-    buffer: Vec<u8>,
-    to_send: Option<(usize, SocketAddr)>
-}
-
-impl Server {
-    fn new(ip: &String) -> Self {
-        let socket = UdpSocket::bind(ip)
-            .expect("Failed to bind specified ip address");
-
-        return Self {
-            socket, 
-            buffer: vec![0; 1024], 
-            to_send: None
-        }
-    }
-
-    fn run(&mut self) -> Result<(), Error> {
-        loop {
-            if let Some((size, peer)) = self.to_send {
-                let amount = self.socket.send_to(&self.buffer[..size], &peer).unwrap();
-
-                println!("Echoed {amount}/{size} bytes to {peer}");
-            }
-        }
+#[inline(always)]
+fn set_log_level() {
+    if cfg!(debug_assertions) {
+        std::env::set_var("RUST_LOG", "debug");
+    } else {
+        std::env::set_var("RUST_LOG", "info");
     }
 }
 
+#[inline]
+fn get_native_window_options(title: String) -> eframe::NativeOptions {
+    return eframe::NativeOptions {
+        centered: true,
+        viewport: egui::ViewportBuilder {
+            title: Some(title),
+            fullscreen: Some(false),
+            resizable: Some(true),
+            ..Default::default()
+        },
+        ..Default::default()
+    };
+}
 
-fn main() -> Result<(), Error> {
-    let args: Vec<String> = args().collect();
-    if let None = args.get(1) {
-        return Ok(());
-    }
 
-    let ipaddr: &String = args.get(1).unwrap();
-    let mut server = Server::new(&ipaddr);
-    server.run()?;
+fn main() -> Result<(), eframe::Error> {
+    set_log_level();
+    colog::init();
 
-    return Ok(());
+    let options = get_native_window_options(String::from("Warp")); 
+    let title =  options.viewport.clone().title.unwrap_or("Warp".to_string());
+
+    return eframe::run_native(
+        "Hello",
+        options,
+        Box::new(
+            |cc| Ok(Box::new(ui::App::new(cc, title)))
+    ));
 }
