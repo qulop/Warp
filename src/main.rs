@@ -1,5 +1,4 @@
 mod networking;
-mod capture;
 mod client;
 mod server;
 mod utils;
@@ -15,7 +14,7 @@ fn set_log_level() {
     }
 }
 
-#[inline]
+#[inline(always)]
 fn get_native_window_options(title: String) -> eframe::NativeOptions {
     return eframe::NativeOptions {
         centered: true,
@@ -25,22 +24,24 @@ fn get_native_window_options(title: String) -> eframe::NativeOptions {
             resizable: Some(true),
             ..Default::default()
         },
+        shader_version: Some(eframe::egui_glow::ShaderVersion::Gl140),
         ..Default::default()
     };
 }
 
 
-fn main() -> Result<(), eframe::Error> {
+#[tokio::main]
+async fn main() -> Result<(), eframe::Error> {
     set_log_level();
     colog::init();
 
-    let options = get_native_window_options(String::from("Warp")); 
-    let title =  options.viewport.clone().title.unwrap_or("Warp".to_string());
+    const APP_TITLE: &str = "Warp";
+    let options = get_native_window_options(String::from(APP_TITLE)); 
 
     return eframe::run_native(
-        "Hello",
+        APP_TITLE,
         options,
         Box::new(
-            |cc| Ok(Box::new(ui::App::new(cc, title)))
+            |cc| Ok(Box::new(ui::App::new(cc)))
     ));
 }
