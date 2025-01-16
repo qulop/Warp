@@ -1,58 +1,38 @@
-#[derive(Default)]
-#[allow(unused)]
+mod frames;
+
+
 pub struct App {
-    title: String,
-    passcode_buffer: String,
-    room_id_buffer: String
+    active_frame: Box<dyn frames::EguiFrame>,
 }
 
 impl App {
-    pub fn new(cc: &eframe::CreationContext, title: String) -> Self {
+    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         cc.egui_ctx.set_theme(egui::Theme::Dark);
 
         return Self {
-            title,
-            passcode_buffer: String::new(),
-            room_id_buffer: String::new()
+            active_frame: Box::new(frames::StartScreen::default()),
         };
     }
 
-    pub fn base_frame(&mut self, ui: &mut egui::Ui) {
-        ui.horizontal(|ui| {
-            ui.label("Enter room passcode:");
 
-            ui.add(
-                egui::TextEdit::singleline(
-                    &mut self.passcode_buffer)
-                        .hint_text("passcode"));
-        });
-
-        ui.horizontal(|ui| {
-            ui.label("Enter room ID:");
-            ui.add(
-                egui::TextEdit::singleline(
-                    &mut self.room_id_buffer)
-                        .hint_text("room ID")
-            );
-        });
-
-        if ui.button("Connect").clicked() {
-            println!("Connect button clicled");
-        }
-
-        ui.separator();
-
-        if ui.button("Share your screen").clicked() {
-            println!("Share button clicled");
+    fn draw_current_frame(&mut self, ui: &mut egui::Ui, ctx: &egui::Context, frame: &mut eframe::Frame) {
+        if let Some(new_frame) = self.active_frame.show_frame(ui, ctx, frame) {
+            use frames::FrameState;
+            
+            self.active_frame = match new_frame {
+                FrameState::ViewerFrame(connection) => Box::new(frames::ViewerScreen::new(connection)),
+                FrameState::SharerFrame(server) => Box::new(frames::HostScreen::new(server)),
+                FrameState::StartFrame =>  Box::new(frames::StartScreen::default()),
+            }
         }
     }
 }
 
 
 impl eframe::App for App {
-    fn update(&mut self, ctx: &egui::Context, _: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
-            self.base_frame(ui);
+            self.draw_current_frame(ui, ctx, frame);
         });
     }
 }
