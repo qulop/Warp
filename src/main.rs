@@ -2,6 +2,7 @@ mod networking;
 mod client;
 mod server;
 mod utils;
+mod crypt;
 mod ui;
 
 
